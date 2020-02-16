@@ -1,5 +1,5 @@
 from unittest import TestCase
-from uuid import uuid4
+from uuid import UUID
 
 from eventsourcing.application.sqlalchemy import SQLAlchemyApplication
 
@@ -11,3 +11,9 @@ class TestApplication(TestCase):
         # Construct application.
         with FederatedWikiApplication.mixin(SQLAlchemyApplication)() as app:
             self.assertIsInstance(app, FederatedWikiApplication)
+
+            # Start new page.
+            page_id = app.start_new_page()
+            self.assertIsInstance(page_id, UUID)
+
+
