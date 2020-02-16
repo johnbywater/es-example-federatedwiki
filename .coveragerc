@@ -1,0 +1,4 @@
+[run]
+source = federatedwiki
+omit =
+    */python?.?/*
