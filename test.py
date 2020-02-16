@@ -13,7 +13,11 @@ class TestApplication(TestCase):
             self.assertIsInstance(app, FederatedWikiApplication)
 
             # Start new page.
-            page_id = app.start_new_page()
+            page_id = app.start_new_page(title='Welcome Visitors', slug='welcome-visitors')
             self.assertIsInstance(page_id, UUID)
 
+            # Present page.
+            page_dict = app.present_page(slug='welcome-visitors')
+            self.assertIsInstance(page_dict, dict)
+            self.assertEqual(page_dict['title'], 'Welcome Visitors')
 
