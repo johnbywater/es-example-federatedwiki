@@ -2,13 +2,11 @@ import json
 from unittest import TestCase
 
 from eventsourcing.application.popo import PopoApplication
-from eventsourcing.application.sqlalchemy import SQLAlchemyApplication
 
 from federatedwiki.application import FederatedWikiApplication, PageNotFound
 
 
 class TestHamRadioTransmissionsWiki(TestCase):
-
     def test(self):
         # Construct wiki application.
         with FederatedWikiApplication.mixin(PopoApplication)() as app:
@@ -20,15 +18,14 @@ class TestHamRadioTransmissionsWiki(TestCase):
             for transmission in transmitted_data.transmissions:
 
                 # Decide the wiki page slug.
-                from_operator = transmission['from_operator']
+                from_operator = transmission["from_operator"]
 
                 # Get or create the wiki page.
                 try:
                     app.get_page(slug=from_operator)
                 except PageNotFound:
                     app.start_new_page(
-                        title="Operator: %s" % from_operator,
-                        slug=from_operator
+                        title="Operator: %s" % from_operator, slug=from_operator
                     )
 
                 # Append a paragraph to operator's page for each transmission.
@@ -37,36 +34,24 @@ class TestHamRadioTransmissionsWiki(TestCase):
                 )
 
             # Check operator 'KI5DYI' has 15 paragraphs on their page.
-            page = app.get_page(slug='KI5DYI')
-            self.assertEqual(len(page['paragraphs']), 15)
+            page = app.get_page(slug="KI5DYI")
+            self.assertEqual(len(page["paragraphs"]), 15)
 
             # Check their first transmission looks ok.
-            self.assertEqual(
-                json.loads(page['paragraphs'][0])['tx_frequency'], '361'
-            )
-            self.assertEqual(
-                json.loads(page['paragraphs'][0])['to_operator'], 'SV1AIQ'
-            )
-            self.assertEqual(
-                json.loads(page['paragraphs'][0])['message'], 'RR73'
-            )
+            self.assertEqual(json.loads(page["paragraphs"][0])["tx_frequency"], "361")
+            self.assertEqual(json.loads(page["paragraphs"][0])["to_operator"], "SV1AIQ")
+            self.assertEqual(json.loads(page["paragraphs"][0])["message"], "RR73")
 
             # Check their last transmission looks ok.
-            self.assertEqual(
-                json.loads(page['paragraphs'][-1])['tx_frequency'], '1688'
-            )
-            self.assertEqual(
-                json.loads(page['paragraphs'][-1])['to_operator'], 'PA5RH'
-            )
-            self.assertEqual(
-                json.loads(page['paragraphs'][-1])['message'], '-07'
-            )
+            self.assertEqual(json.loads(page["paragraphs"][-1])["tx_frequency"], "1688")
+            self.assertEqual(json.loads(page["paragraphs"][-1])["to_operator"], "PA5RH")
+            self.assertEqual(json.loads(page["paragraphs"][-1])["message"], "-07")
 
 
 class TransmittedDataFixture(object):
     def __init__(self, raw_data):
         self.transmissions = []
-        for line in raw_data.split('\n'):
+        for line in raw_data.split("\n"):
             parts = line.split()
             if len(parts) < 5:
                 if len(parts) > 0:
@@ -74,17 +59,18 @@ class TransmittedDataFixture(object):
                 continue
 
             transmission = {
-                'ip_address': parts[0],
-                'timestamp': parts[1],
-                'tx_frequency': parts[2],
-                'to_operator': parts[3],
-                'from_operator': parts[4],
-                'message': " ".join(parts[5:]) if len(parts) > 5 else '',
+                "ip_address": parts[0],
+                "timestamp": parts[1],
+                "tx_frequency": parts[2],
+                "to_operator": parts[3],
+                "from_operator": parts[4],
+                "message": " ".join(parts[5:]) if len(parts) > 5 else "",
             }
             self.transmissions.append(transmission)
 
 
-transmitted_data = TransmittedDataFixture("""
+transmitted_data = TransmittedDataFixture(
+    """
 73.157.190.193 143330 361 SV1AIQ KI5DYI RR73
 73.157.190.193 143445 2817 DJ6JZ KA5HET -17
 73.157.190.193 143500 361 SV1AIQ KI5DYI 73
@@ -1155,4 +1141,5 @@ transmitted_data = TransmittedDataFixture("""
 73.157.190.193 153145 2290 UR4QX N9RD -24
 73.157.190.193 153145 2540 PD7RF KA5HET RR73
 73.157.190.193 153145 2682 K3BSX KI5DZR EM12
-""")
+"""
+)

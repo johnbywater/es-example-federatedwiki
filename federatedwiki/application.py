@@ -23,10 +23,7 @@ class FederatedWikiApplication(SimpleApplication):
     def get_page(self, slug: str):
         page_id = self._get_page_id_from_slug(slug)
         page = self._get_page(page_id)
-        page_dict = {
-            "title": page.title,
-            "paragraphs": copy(page.paragraphs)
-        }
+        page_dict = {"title": page.title, "paragraphs": copy(page.paragraphs)}
         return page_dict
 
     def _get_page_id_from_slug(self, slug):
