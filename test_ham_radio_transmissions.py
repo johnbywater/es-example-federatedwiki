@@ -1,6 +1,7 @@
 import json
 from unittest import TestCase
 
+from eventsourcing.application.popo import PopoApplication
 from eventsourcing.application.sqlalchemy import SQLAlchemyApplication
 
 from federatedwiki.application import FederatedWikiApplication, PageNotFound
@@ -9,11 +10,15 @@ from federatedwiki.application import FederatedWikiApplication, PageNotFound
 class TestHamRadioTransmissionsWiki(TestCase):
 
     def test(self):
-        # Construct application.
-        with FederatedWikiApplication.mixin(SQLAlchemyApplication)() as app:
+        # Construct wiki application.
+        with FederatedWikiApplication.mixin(PopoApplication)() as app:
+
+            # Just for the IDE.
             assert isinstance(app, FederatedWikiApplication)
 
+            # Add all the detected transmissions to the wiki.
             for transmission in transmitted_data.transmissions:
+
                 # Decide the wiki page slug.
                 from_operator = transmission['from_operator']
 
@@ -21,25 +26,41 @@ class TestHamRadioTransmissionsWiki(TestCase):
                 try:
                     app.get_page(slug=from_operator)
                 except PageNotFound:
-                    app.start_new_page("Operator: %s" % from_operator, slug=from_operator)
+                    app.start_new_page(
+                        title="Operator: %s" % from_operator,
+                        slug=from_operator
+                    )
 
                 # Append a paragraph to operator's page for each transmission.
                 app.append_paragraph(
                     slug=from_operator, paragraph=json.dumps(transmission)
                 )
 
-            # Check some of the operator pages.
+            # Check operator 'KI5DYI' has 15 paragraphs on their page.
             page = app.get_page(slug='KI5DYI')
             self.assertEqual(len(page['paragraphs']), 15)
 
+            # Check their first transmission looks ok.
+            self.assertEqual(
+                json.loads(page['paragraphs'][0])['tx_frequency'], '361'
+            )
+            self.assertEqual(
+                json.loads(page['paragraphs'][0])['to_operator'], 'SV1AIQ'
+            )
+            self.assertEqual(
+                json.loads(page['paragraphs'][0])['message'], 'RR73'
+            )
 
-class TransmissionFixture(object):
-    def __init__(self, *, ip_address, timestamp, to_operator, from_operator, message):
-        self.ip_address = ip_address
-        self.timestamp = timestamp
-        self.to_operator = to_operator
-        self.from_operator = from_operator
-        self.message = message
+            # Check their last transmission looks ok.
+            self.assertEqual(
+                json.loads(page['paragraphs'][-1])['tx_frequency'], '1688'
+            )
+            self.assertEqual(
+                json.loads(page['paragraphs'][-1])['to_operator'], 'PA5RH'
+            )
+            self.assertEqual(
+                json.loads(page['paragraphs'][-1])['message'], '-07'
+            )
 
 
 class TransmittedDataFixture(object):
@@ -58,7 +79,7 @@ class TransmittedDataFixture(object):
                 'tx_frequency': parts[2],
                 'to_operator': parts[3],
                 'from_operator': parts[4],
-                'message': parts[5:] if len(parts) > 5 else '',
+                'message': " ".join(parts[5:]) if len(parts) > 5 else '',
             }
             self.transmissions.append(transmission)
 
