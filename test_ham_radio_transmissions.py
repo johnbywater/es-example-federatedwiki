@@ -51,6 +51,7 @@ class TestHamRadioTransmissionsWiki(TestCase):
             # Process the transmission events into a set of frequencies and a set of operators.
             frequencies = set()
             operators = set()
+            timestamps = []
             log_reader = NotificationLogReader(notification_log=app.notification_log)
             for notification in log_reader.read_list():
                 if notification["topic"].endswith("ParagraphAppended"):
@@ -61,6 +62,7 @@ class TestHamRadioTransmissionsWiki(TestCase):
                     frequencies.add(int(tx_frequency))
                     operators.add(transmission["from_operator"])
                     operators.add(transmission["to_operator"])
+                    timestamps.append(transmission['timestamp'])
 
             # Check the maximum and minimum frequencies.
             self.assertEqual(max(frequencies), 4245)
@@ -68,6 +70,10 @@ class TestHamRadioTransmissionsWiki(TestCase):
 
             # Check the number of operators.
             self.assertEqual(len(operators), 258)
+
+            # Check the first and last timestamps (order is preserved).
+            self.assertEqual(timestamps[0], 143330)
+            self.assertEqual(timestamps[-1], 153145)
 
 
 class TransmittedDataFixture(object):
