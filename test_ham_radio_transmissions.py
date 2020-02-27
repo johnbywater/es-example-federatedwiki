@@ -1,15 +1,18 @@
 import json
 from unittest import TestCase
 
+from eventsourcing.application.notificationlog import NotificationLogReader
 from eventsourcing.application.popo import PopoApplication
+from eventsourcing.application.sqlalchemy import SQLAlchemyApplication
 
 from federatedwiki.application import FederatedWikiApplication, PageNotFound
+from federatedwiki.domainmodel import WikiPage
 
 
 class TestHamRadioTransmissionsWiki(TestCase):
     def test(self):
         # Construct wiki application.
-        with FederatedWikiApplication.mixin(PopoApplication)() as app:
+        with FederatedWikiApplication.mixin(SQLAlchemyApplication)() as app:
 
             # Just for the IDE.
             assert isinstance(app, FederatedWikiApplication)
@@ -38,14 +41,29 @@ class TestHamRadioTransmissionsWiki(TestCase):
             self.assertEqual(len(page["paragraphs"]), 15)
 
             # Check their first transmission looks ok.
-            self.assertEqual(json.loads(page["paragraphs"][0])["tx_frequency"], "361")
+            self.assertEqual(json.loads(page["paragraphs"][0])["tx_frequency"], 361)
             self.assertEqual(json.loads(page["paragraphs"][0])["to_operator"], "SV1AIQ")
             self.assertEqual(json.loads(page["paragraphs"][0])["message"], "RR73")
 
             # Check their last transmission looks ok.
-            self.assertEqual(json.loads(page["paragraphs"][-1])["tx_frequency"], "1688")
+            self.assertEqual(json.loads(page["paragraphs"][-1])["tx_frequency"], 1688)
             self.assertEqual(json.loads(page["paragraphs"][-1])["to_operator"], "PA5RH")
             self.assertEqual(json.loads(page["paragraphs"][-1])["message"], "-07")
+
+            # Project the wiki into a set of the transmitted frequencies.
+            frequencies = set()
+            log_reader = NotificationLogReader(notification_log=app.notification_log)
+            for notification in log_reader.read_list():
+                if notification['topic'].endswith('ParagraphAppended'):
+                    domain_event_state = json.loads(notification['state'])
+                    paragraph = domain_event_state['paragraph']
+                    transmission = json.loads(paragraph)
+                    tx_frequency = transmission['tx_frequency']
+                    frequencies.add(int(tx_frequency))
+
+            # Check the maximum and minimum frequencies.
+            self.assertEqual(max(frequencies), 4245)
+            self.assertEqual(min(frequencies), 342)
 
 
 class TransmittedDataFixture(object):
@@ -60,8 +78,8 @@ class TransmittedDataFixture(object):
 
             transmission = {
                 "ip_address": parts[0],
-                "timestamp": parts[1],
-                "tx_frequency": parts[2],
+                "timestamp": int(parts[1]),
+                "tx_frequency": int(parts[2]),
                 "to_operator": parts[3],
                 "from_operator": parts[4],
                 "message": " ".join(parts[5:]) if len(parts) > 5 else "",
