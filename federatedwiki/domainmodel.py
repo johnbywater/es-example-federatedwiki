@@ -13,6 +13,19 @@ class WikiPage(BaseAggregateRoot):
         super(WikiPage, self).__init__(**kwargs)
         self.title = title
         self.slug = slug
+        self.paragraphs = []
+
+    def append_paragraph(self, paragraph):
+        self.__trigger_event__(self.ParagraphAppended, paragraph=paragraph)
+
+    class ParagraphAppended(BaseAggregateRoot.Event):
+        @property
+        def paragraph(self):
+            return self.__dict__['paragraph']
+
+        def mutate(self, obj: "WikiPage") -> None:
+            obj.paragraphs.append(self.paragraph)
+
 
 
 class IndexEntry(BaseAggregateRoot):
