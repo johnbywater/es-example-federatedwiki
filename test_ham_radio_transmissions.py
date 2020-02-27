@@ -2,11 +2,9 @@ import json
 from unittest import TestCase
 
 from eventsourcing.application.notificationlog import NotificationLogReader
-from eventsourcing.application.popo import PopoApplication
 from eventsourcing.application.sqlalchemy import SQLAlchemyApplication
 
 from federatedwiki.application import FederatedWikiApplication, PageNotFound
-from federatedwiki.domainmodel import WikiPage
 
 
 class TestHamRadioTransmissionsWiki(TestCase):
@@ -50,20 +48,26 @@ class TestHamRadioTransmissionsWiki(TestCase):
             self.assertEqual(json.loads(page["paragraphs"][-1])["to_operator"], "PA5RH")
             self.assertEqual(json.loads(page["paragraphs"][-1])["message"], "-07")
 
-            # Project the wiki into a set of the transmitted frequencies.
+            # Process the transmission events into a set of frequencies and a set of operators.
             frequencies = set()
+            operators = set()
             log_reader = NotificationLogReader(notification_log=app.notification_log)
             for notification in log_reader.read_list():
-                if notification['topic'].endswith('ParagraphAppended'):
-                    domain_event_state = json.loads(notification['state'])
-                    paragraph = domain_event_state['paragraph']
+                if notification["topic"].endswith("ParagraphAppended"):
+                    domain_event_state = json.loads(notification["state"])
+                    paragraph = domain_event_state["paragraph"]
                     transmission = json.loads(paragraph)
-                    tx_frequency = transmission['tx_frequency']
+                    tx_frequency = transmission["tx_frequency"]
                     frequencies.add(int(tx_frequency))
+                    operators.add(transmission["from_operator"])
+                    operators.add(transmission["to_operator"])
 
             # Check the maximum and minimum frequencies.
             self.assertEqual(max(frequencies), 4245)
             self.assertEqual(min(frequencies), 342)
+
+            # Check the number of operators.
+            self.assertEqual(len(operators), 258)
 
 
 class TransmittedDataFixture(object):
