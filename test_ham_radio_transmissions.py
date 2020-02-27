@@ -24,7 +24,7 @@ class TestHamRadioTransmissionsWiki(TestCase):
                 try:
                     app.get_page(slug=from_operator)
                 except PageNotFound:
-                    app.start_new_page(
+                    app.create_page(
                         title="Operator: %s" % from_operator, slug=from_operator
                     )
 

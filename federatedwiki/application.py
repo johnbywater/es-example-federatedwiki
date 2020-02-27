@@ -12,7 +12,7 @@ class PageNotFound(Exception):
 
 
 class FederatedWikiApplication(SimpleApplication):
-    def start_new_page(self, title: str, slug: str):
+    def create_page(self, title: str, slug: str):
         page = WikiPage.start_new(title=title, slug=slug,)
         index_entry = IndexEntry.__create__(
             originator_id=create_index_entry_id(slug), page_id=page.id,

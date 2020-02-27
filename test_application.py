@@ -12,8 +12,8 @@ class TestApplication(TestCase):
         with FederatedWikiApplication.mixin(SQLAlchemyApplication)() as app:
             assert isinstance(app, FederatedWikiApplication)
 
-            # Start new page.
-            page_id = app.start_new_page(
+            # Create a page.
+            page_id = app.create_page(
                 title="Welcome Visitors", slug="welcome-visitors"
             )
 
